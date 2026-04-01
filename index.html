@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ONE LDN — PT Cash Tracker H1 2026</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+    .app { max-width: 1200px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; border-bottom: 1px solid #1c1c1c; padding-bottom: 22px; }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #e8c547; margin-bottom: 5px; }
+    .title { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .header-meta { font-size: 11px; color: #444; text-align: right; line-height: 1.8; }
+
+    .alert { background: #130e00; border: 1px solid #342500; border-radius: 10px; padding: 12px 18px; margin-bottom: 24px; font-size: 12px; color: #c8a830; line-height: 1.6; }
+
+    .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 26px; }
+    .kpi { background: #111; border: 1px solid #1e1e1e; border-radius: 12px; padding: 18px 20px; }
+    .kpi-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #4a4a4a; margin-bottom: 10px; }
+    .kpi-val { font-size: 23px; font-weight: 700; line-height: 1; }
+    .kpi-sub { font-size: 11px; color: #3a3a3a; margin-top: 6px; }
+    .white { color: #fff; } .amber { color: #e8c547; } .red { color: #f87171; } .green { color: #4ade80; }
+
+    .tabs { display: flex; gap: 2px; background: #111; border: 1px solid #1e1e1e; border-radius: 12px; padding: 4px; margin-bottom: 22px; }
+    .tab { flex: 1; padding: 10px 16px; border: none; background: transparent; color: #4a4a4a; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 9px; transition: all 0.15s; }
+    .tab.on { background: #1e1e1e; color: #fff; }
+    .tab:hover:not(.on) { color: #888; }
+
+    .card { background: #111; border: 1px solid #1e1e1e; border-radius: 12px; padding: 22px 24px; margin-bottom: 16px; }
+    .card-ttl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #4a4a4a; margin-bottom: 4px; }
+    .card-sub { font-size: 12px; color: #383838; margin-bottom: 20px; }
+
+    .chart-box { width: 100%; overflow: visible; }
+    .chart-box svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; }
+    .leg-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #555; }
+    .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { padding: 9px 11px; color: #4a4a4a; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #1e1e1e; text-align: left; white-space: nowrap; }
+    th.r { text-align: right; }
+    td { padding: 10px 11px; border-bottom: 1px solid #151515; color: #b0b0b0; vertical-align: middle; }
+    td.r { text-align: right; }
+    td.dim { color: #333; }
+    td.lbl { color: #666; font-size: 12px; }
+    tr.tot td { border-top: 1px solid #2a2a2a; font-weight: 700; color: #fff; }
+    tr.sec-hdr td { padding: 14px 11px 4px; color: #383838; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; border-bottom: none; }
+    tr:last-child td { border-bottom: none; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; }
+    .bg { background: #0c1f14; color: #4ade80; }
+    .br { background: #1f0d0d; color: #f87171; }
+    .ba { background: #1a1400; color: #e8c547; }
+    .bb { background: #0c1828; color: #60a5fa; }
+    .bp { background: #130f1f; color: #a78bfa; }
+
+    .fn { font-size: 11px; color: #303030; margin-top: 16px; line-height: 1.7; }
+    .fc { display: inline-block; font-size: 9px; font-weight: 700; color: #2a2a2a; background: #191919; border: 1px solid #252525; border-radius: 3px; padding: 1px 4px; vertical-align: middle; margin-left: 3px; letter-spacing: 0.05em; }
+
+    .tip { position: absolute; pointer-events: none; background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 8px; padding: 9px 13px; font-size: 12px; white-space: nowrap; z-index: 20; transform: translateX(-50%); }
+    .tip-hd { font-weight: 700; color: #fff; margin-bottom: 6px; border-bottom: 1px solid #222; padding-bottom: 5px; }
+    .tip-row { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 2px; }
+    .chart-wrap { position: relative; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {
+  useState,
+  useCallback
+} = React;
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+const N = 3; // months with actuals
+
+const T = {
+  ptCredits: [7380, 9040, 9180, 8520, 6200, 4500],
+  ptMembership: [1590, 1590, 1590, 1272, 954, 636],
+  ptRent: [2000, 2000, 2000, 2000, 2000, 2000],
+  newModel: [0, 4158, 10395, 19127, 29106, 39085]
+};
+const A = {
+  ptCredits: [3240, 2680, 3100, null, null, null],
+  ptMembership: [1500, 1350, 1272, null, null, null],
+  ptRent: [1740, 2000, 2000, null, null, null],
+  newModel: [4430, 7655, 7158, null, null, null]
+};
+const PNL = [{
+  month: 'Jan',
+  rev: 10093.58,
+  costs: 6259.16,
+  profit: 3834.42,
+  margin: 38.0,
+  actual: true
+}, {
+  month: 'Feb',
+  rev: 12582.13,
+  costs: 8454.24,
+  profit: 4127.89,
+  margin: 32.8,
+  actual: true
+}, {
+  month: 'Mar',
+  rev: 12182.98,
+  costs: 10329.36,
+  profit: 1853.62,
+  margin: 15.2,
+  actual: true
+}, {
+  month: 'Apr',
+  rev: 26099,
+  costs: 13249,
+  profit: 12850,
+  margin: 49.2,
+  actual: false
+}, {
+  month: 'May',
+  rev: 32217,
+  costs: 17552,
+  profit: 14665,
+  margin: 45.5,
+  actual: false
+}, {
+  month: 'Jun',
+  rev: 38851,
+  costs: 21855,
+  profit: 16996,
+  margin: 43.7,
+  actual: false
+}];
+const PT_DATA = [{
+  pt: 'Craig Clout',
+  jan: 3480,
+  feb: 5460,
+  mar: 4260
+}, {
+  pt: 'Jess Donehue',
+  jan: 80,
+  feb: 545,
+  mar: 608
+}, {
+  pt: 'Harry Sheppard',
+  jan: 0,
+  feb: 1350,
+  mar: 700
+}, {
+  pt: 'Mara Greenwood',
+  jan: 0,
+  feb: 0,
+  mar: 960
+}, {
+  pt: 'Intro / Unattrib.',
+  jan: 300,
+  feb: 300,
+  mar: 300
+}];
+const COACHES = [{
+  name: 'Head of Fitness',
+  jan: 5000,
+  feb: 5000,
+  mar: 5000
+}, {
+  name: 'Craig Clout',
+  jan: 442.75,
+  feb: 2096,
+  mar: 2886.75
+}, {
+  name: 'Jess Donehue',
+  jan: 0,
+  feb: 93.51,
+  mar: 534.30
+}, {
+  name: 'Harry Sheppard',
+  jan: 0,
+  feb: 162,
+  mar: 561
+}];
+const TAX = {
+  jan: 816.41,
+  feb: 1102.73,
+  mar: 1347.31
+};
+const OLD_PTS = ['Alice Farrow', 'Aimee Jeffs', 'Annie Hall', 'Adam Siddle', 'Sam Pepys', 'Luke Mehson', 'Max Wade', 'Lucas Cloves'];
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+
+const s = arr => arr.reduce((a, b) => (a ?? 0) + (b ?? 0), 0);
+const fmt = v => v == null ? '—' : `£${Math.round(Math.abs(v)).toLocaleString()}`;
+const fmtD = v => `£${Math.abs(v).toLocaleString('en-GB', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})}`;
+const tT = MONTHS.map((_, i) => s(Object.values(T).map(a => a[i])));
+const aT = MONTHS.map((_, i) => i < N ? s(Object.values(A).map(a => a[i])) : null);
+const H1 = s(tT),
+  YTD_A = s(aT.slice(0, N)),
+  YTD_T = s(tT.slice(0, N));
+const YTD_V = YTD_A - YTD_T;
+
+// ── SVG CHART ENGINE ─────────────────────────────────────────────────────────
+
+const VW = 700;
+const PAD = {
+  t: 20,
+  r: 16,
+  b: 38,
+  l: 56
+};
+const cw = VW - PAD.l - PAD.r;
+function niceMax(v) {
+  const e = Math.pow(10, Math.floor(Math.log10(v || 1)));
+  return Math.ceil((v || 1) / e) * e;
+}
+function yTicks(max, n = 5) {
+  return Array.from({
+    length: n + 1
+  }, (_, i) => max * i / n);
+}
+function sy(v, max, ch) {
+  return PAD.t + ch - v / max * ch;
+}
+function fmtTick(v) {
+  return v >= 1000 ? `£${(v / 1000).toFixed(0)}k` : `£${v}`;
+}
+
+// Grouped bar chart — two bar series per month
+function GroupedBars({
+  data,
+  s1key,
+  s1color,
+  s1label,
+  s2key,
+  s2color,
+  s2label,
+  height = 260
+}) {
+  const [tip, setTip] = useState(null);
+  const ch = height - PAD.t - PAD.b;
+  const allV = data.flatMap(d => [d[s1key] || 0, d[s2key] || 0]).filter(v => v != null);
+  const max = niceMax(Math.max(...allV));
+  const ticks = yTicks(max);
+  const slotW = cw / data.length;
+  const bw = Math.min(slotW * 0.28, 36);
+  const gap = 4;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "chart-wrap",
+    style: {
+      height
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: `0 0 ${VW} ${height}`
+  }, ticks.map((t, i) => {
+    const y = sy(t, max, ch);
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: PAD.l,
+      x2: VW - PAD.r,
+      y1: y,
+      y2: y,
+      stroke: "#181818",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: PAD.l - 6,
+      y: y + 4,
+      textAnchor: "end",
+      fill: "#3a3a3a",
+      fontSize: "11"
+    }, fmtTick(t)));
+  }), data.map((d, i) => {
+    const cx = PAD.l + i * slotW + slotW / 2;
+    const x1 = cx - bw - gap / 2;
+    const x2 = cx + gap / 2;
+    const v1 = d[s1key] || 0,
+      v2 = d[s2key];
+    const bh1 = v1 / max * ch;
+    const bh2 = v2 != null ? v2 / max * ch : 0;
+    const y1 = sy(v1, max, ch),
+      y2 = v2 != null ? sy(v2, max, ch) : PAD.t + ch;
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: x1,
+      y: y1,
+      width: bw,
+      height: bh1,
+      fill: s1color,
+      rx: "2",
+      onMouseEnter: () => setTip({
+        x: cx,
+        y: Math.min(y1, y2) - 10,
+        label: d.month,
+        rows: [{
+          n: s1label,
+          v: v1,
+          c: s1color
+        }, {
+          n: s2label,
+          v: v2,
+          c: s2color
+        }]
+      }),
+      onMouseLeave: () => setTip(null)
+    }), v2 != null && /*#__PURE__*/React.createElement("rect", {
+      x: x2,
+      y: y2,
+      width: bw,
+      height: bh2,
+      fill: s2color,
+      rx: "2",
+      onMouseEnter: () => setTip({
+        x: cx,
+        y: Math.min(y1, y2) - 10,
+        label: d.month,
+        rows: [{
+          n: s1label,
+          v: v1,
+          c: s1color
+        }, {
+          n: s2label,
+          v: v2,
+          c: s2color
+        }]
+      }),
+      onMouseLeave: () => setTip(null)
+    }), /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: height - 8,
+      textAnchor: "middle",
+      fill: "#4a4a4a",
+      fontSize: "11"
+    }, d.month), d.fc && /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: height - 8,
+      dx: "14",
+      textAnchor: "start",
+      fill: "#2a2a2a",
+      fontSize: "9"
+    }, "F"));
+  })), tip && /*#__PURE__*/React.createElement("div", {
+    className: "tip",
+    style: {
+      left: `${tip.x / VW * 100}%`,
+      top: tip.y > 0 ? tip.y : 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tip-hd"
+  }, tip.label), tip.rows.map((r, i) => r.v != null && /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "tip-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: r.c
+    }
+  }, r.n), /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: '#fff'
+    }
+  }, "\xA3", Math.round(r.v).toLocaleString())))));
+}
+
+// Dual line chart
+function DualLines({
+  data,
+  l1key,
+  l1color,
+  l1dash,
+  l1label,
+  l2key,
+  l2color,
+  l2label,
+  height = 220
+}) {
+  const [tip, setTip] = useState(null);
+  const ch = height - PAD.t - PAD.b;
+  const allV = data.flatMap(d => [d[l1key] || 0, d[l2key] || 0]).filter(v => v != null && v > 0);
+  const max = niceMax(Math.max(...allV));
+  const ticks = yTicks(max);
+  const slotW = cw / (data.length - 1);
+  const pts1 = data.map((d, i) => ({
+    x: PAD.l + i * slotW,
+    y: sy(d[l1key] || 0, max, ch),
+    v: d[l1key]
+  }));
+  const pts2 = data.filter(d => d[l2key] != null).map((d, i) => ({
+    x: PAD.l + data.indexOf(d) * slotW,
+    y: sy(d[l2key], max, ch),
+    v: d[l2key],
+    m: d.month
+  }));
+  const poly1 = pts1.map(p => `${p.x},${p.y}`).join(' ');
+  const poly2 = pts2.map(p => `${p.x},${p.y}`).join(' ');
+  return /*#__PURE__*/React.createElement("div", {
+    className: "chart-wrap",
+    style: {
+      height
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: `0 0 ${VW} ${height}`
+  }, ticks.map((t, i) => {
+    const y = sy(t, max, ch);
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: PAD.l,
+      x2: VW - PAD.r,
+      y1: y,
+      y2: y,
+      stroke: "#181818",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: PAD.l - 6,
+      y: y + 4,
+      textAnchor: "end",
+      fill: "#3a3a3a",
+      fontSize: "11"
+    }, fmtTick(t)));
+  }), data.map((d, i) => /*#__PURE__*/React.createElement("text", {
+    key: i,
+    x: PAD.l + i * slotW,
+    y: height - 8,
+    textAnchor: "middle",
+    fill: "#4a4a4a",
+    fontSize: "11"
+  }, d.month)), /*#__PURE__*/React.createElement("polyline", {
+    points: poly1,
+    fill: "none",
+    stroke: l1color,
+    strokeWidth: "2",
+    strokeDasharray: l1dash || 'none'
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: poly2,
+    fill: "none",
+    stroke: l2color,
+    strokeWidth: "2.5"
+  }), pts2.map((p, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: p.x,
+    cy: p.y,
+    r: "5",
+    fill: l2color,
+    stroke: "#0a0a0a",
+    strokeWidth: "2",
+    onMouseEnter: () => setTip({
+      x: p.x,
+      y: p.y - 14,
+      label: p.m,
+      rows: [{
+        n: l2label,
+        v: p.v,
+        c: l2color
+      }]
+    }),
+    onMouseLeave: () => setTip(null)
+  })), pts1.map((p, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: p.x,
+    cy: p.y,
+    r: "3",
+    fill: l1color,
+    stroke: "#0a0a0a",
+    strokeWidth: "1.5",
+    onMouseEnter: () => setTip({
+      x: p.x,
+      y: p.y - 14,
+      label: data[i].month,
+      rows: [{
+        n: l1label,
+        v: p.v,
+        c: l1color
+      }]
+    }),
+    onMouseLeave: () => setTip(null)
+  }))), tip && /*#__PURE__*/React.createElement("div", {
+    className: "tip",
+    style: {
+      left: `${tip.x / VW * 100}%`,
+      top: Math.max(tip.y, 4)
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tip-hd"
+  }, tip.label), tip.rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "tip-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: r.c
+    }
+  }, r.n), /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: '#fff'
+    }
+  }, "\xA3", Math.round(r.v).toLocaleString())))));
+}
+
+// Triple bar + line (P&L chart)
+function PnLChart({
+  data,
+  height = 310
+}) {
+  const [tip, setTip] = useState(null);
+  const ch = height - PAD.t - PAD.b;
+  const barVals = data.flatMap(d => [d.rev, d.costs]);
+  const max = niceMax(Math.max(...barVals) * 1.05);
+  const ticks = yTicks(max);
+  const slotW = cw / data.length;
+  const bw = Math.min(slotW * 0.28, 34);
+  const gap = 4;
+  const profPts = data.map((d, i) => ({
+    x: PAD.l + i * slotW + slotW / 2,
+    y: sy(d.profit, max, ch)
+  }));
+  const profPoly = profPts.map(p => `${p.x},${p.y}`).join(' ');
+  return /*#__PURE__*/React.createElement("div", {
+    className: "chart-wrap",
+    style: {
+      height
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: `0 0 ${VW} ${height}`
+  }, ticks.map((t, i) => {
+    const y = sy(t, max, ch);
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: PAD.l,
+      x2: VW - PAD.r,
+      y1: y,
+      y2: y,
+      stroke: "#181818",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: PAD.l - 6,
+      y: y + 4,
+      textAnchor: "end",
+      fill: "#3a3a3a",
+      fontSize: "11"
+    }, fmtTick(t)));
+  }), data.map((d, i) => {
+    const cx = PAD.l + i * slotW + slotW / 2;
+    const xR = cx - bw - gap / 2,
+      xC = cx + gap / 2;
+    const bhR = d.rev / max * ch,
+      bhC = d.costs / max * ch;
+    const yR = sy(d.rev, max, ch),
+      yC = sy(d.costs, max, ch);
+    const revFill = d.actual ? '#4a9eed' : '#1c3a52';
+    const costFill = d.actual ? '#f87171' : '#3d1a1a';
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: xR,
+      y: yR,
+      width: bw,
+      height: bhR,
+      fill: revFill,
+      rx: "2",
+      onMouseEnter: () => setTip({
+        x: cx,
+        y: Math.min(yR, yC) - 10,
+        label: d.month + (d.actual ? '' : ' ‹F›'),
+        rows: [{
+          n: 'Revenue (ex VAT)',
+          v: d.rev,
+          c: revFill
+        }, {
+          n: 'Coach Costs',
+          v: d.costs,
+          c: costFill
+        }, {
+          n: 'Net Profit',
+          v: d.profit,
+          c: '#4ade80'
+        }]
+      }),
+      onMouseLeave: () => setTip(null)
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: xC,
+      y: yC,
+      width: bw,
+      height: bhC,
+      fill: costFill,
+      rx: "2",
+      onMouseEnter: () => setTip({
+        x: cx,
+        y: Math.min(yR, yC) - 10,
+        label: d.month + (d.actual ? '' : ' ‹F›'),
+        rows: [{
+          n: 'Revenue (ex VAT)',
+          v: d.rev,
+          c: revFill
+        }, {
+          n: 'Coach Costs',
+          v: d.costs,
+          c: costFill
+        }, {
+          n: 'Net Profit',
+          v: d.profit,
+          c: '#4ade80'
+        }]
+      }),
+      onMouseLeave: () => setTip(null)
+    }), /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: height - 8,
+      textAnchor: "middle",
+      fill: "#4a4a4a",
+      fontSize: "11"
+    }, d.month, !d.actual && /*#__PURE__*/React.createElement("tspan", {
+      fill: "#2a2a2a",
+      fontSize: "9"
+    }, " F")));
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: profPoly,
+    fill: "none",
+    stroke: "#4ade80",
+    strokeWidth: "2.5"
+  }), profPts.map((p, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: p.x,
+    cy: p.y,
+    r: "5",
+    fill: "#4ade80",
+    stroke: "#0a0a0a",
+    strokeWidth: "2",
+    onMouseEnter: () => setTip({
+      x: p.x,
+      y: p.y - 14,
+      label: data[i].month + (data[i].actual ? '' : ' ‹F›'),
+      rows: [{
+        n: 'Net Profit',
+        v: data[i].profit,
+        c: '#4ade80'
+      }]
+    }),
+    onMouseLeave: () => setTip(null)
+  }))), tip && /*#__PURE__*/React.createElement("div", {
+    className: "tip",
+    style: {
+      left: `${tip.x / VW * 100}%`,
+      top: Math.max(tip.y, 4)
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tip-hd"
+  }, tip.label), tip.rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "tip-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: r.c
+    }
+  }, r.n), /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: '#fff'
+    }
+  }, "\xA3", Math.round(r.v).toLocaleString())))));
+}
+
+// Three-bar chart per category (Jan/Feb/Mar)
+function TriBars({
+  data,
+  nameKey,
+  height = 250
+}) {
+  const [tip, setTip] = useState(null);
+  const ch = height - PAD.t - PAD.b;
+  const allV = data.flatMap(d => [d.jan, d.feb, d.mar]);
+  const max = niceMax(Math.max(...allV) * 1.05);
+  const ticks = yTicks(max);
+  const slotW = cw / data.length;
+  const bw = Math.min(slotW * 0.22, 28);
+  const COLS = ['#4a9eed', '#e8c547', '#a78bfa'];
+  const LBLS = ['Jan', 'Feb', 'Mar'];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "chart-wrap",
+    style: {
+      height
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: `0 0 ${VW} ${height}`
+  }, ticks.map((t, i) => {
+    const y = sy(t, max, ch);
+    return /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: PAD.l,
+      x2: VW - PAD.r,
+      y1: y,
+      y2: y,
+      stroke: "#181818",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: PAD.l - 6,
+      y: y + 4,
+      textAnchor: "end",
+      fill: "#3a3a3a",
+      fontSize: "11"
+    }, fmtTick(t)));
+  }), data.map((d, gi) => {
+    const cx = PAD.l + gi * slotW + slotW / 2;
+    const vals = [d.jan, d.feb, d.mar];
+    const totalW = 3 * bw + 2 * 3;
+    const x0 = cx - totalW / 2;
+    return /*#__PURE__*/React.createElement("g", {
+      key: gi
+    }, vals.map((v, vi) => {
+      if (!v && v !== 0) return null;
+      const bh = v / max * ch;
+      const bx = x0 + vi * (bw + 3);
+      const by = sy(v, max, ch);
+      return /*#__PURE__*/React.createElement("rect", {
+        key: vi,
+        x: bx,
+        y: by,
+        width: bw,
+        height: bh,
+        fill: COLS[vi],
+        rx: "2",
+        onMouseEnter: () => setTip({
+          x: cx,
+          y: by - 10,
+          label: d[nameKey].split(' ')[0],
+          rows: vals.map((val, i) => ({
+            n: LBLS[i],
+            v: val,
+            c: COLS[i]
+          }))
+        }),
+        onMouseLeave: () => setTip(null)
+      });
+    }), /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: height - 8,
+      textAnchor: "middle",
+      fill: "#777",
+      fontSize: "12"
+    }, d[nameKey].split(' ')[0]));
+  })), tip && /*#__PURE__*/React.createElement("div", {
+    className: "tip",
+    style: {
+      left: `${tip.x / VW * 100}%`,
+      top: Math.max(tip.y, 4)
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tip-hd"
+  }, tip.label), tip.rows.map((r, i) => r.v != null && /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "tip-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: r.c
+    }
+  }, r.n), /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: '#fff'
+    }
+  }, "\xA3", Math.round(r.v).toLocaleString())))));
+}
+
+// ── VARIANCE BADGE ────────────────────────────────────────────────────────────
+
+const VBadge = ({
+  actual,
+  target
+}) => {
+  if (actual == null) return /*#__PURE__*/React.createElement("span", {
+    className: "dim"
+  }, "\u2014");
+  const v = actual - target,
+    pct = (v / target * 100).toFixed(1);
+  return /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    className: `badge ${v >= 0 ? 'bg' : 'br'}`
+  }, v >= 0 ? '+' : '', fmt(v)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#3a3a3a',
+      fontSize: 11,
+      marginLeft: 5
+    }
+  }, v >= 0 ? '+' : '', pct, "%"));
+};
+
+// ── LINE DEFS ─────────────────────────────────────────────────────────────────
+
+const LINES = [{
+  label: 'PT Credits',
+  key: 'ptCredits',
+  color: '#60a5fa'
+}, {
+  label: 'PT Membership',
+  key: 'ptMembership',
+  color: '#a78bfa'
+}, {
+  label: 'PT Rent',
+  key: 'ptRent',
+  color: '#6ee7b7'
+}, {
+  label: 'New PT Model',
+  key: 'newModel',
+  color: '#e8c547'
+}];
+
+// ── TAB: REVENUE ──────────────────────────────────────────────────────────────
+
+function RevenueTab() {
+  const barData = MONTHS.map((m, i) => ({
+    month: m,
+    Target: tT[i],
+    Actual: aT[i],
+    fc: i >= N
+  }));
+  const cumData = MONTHS.map((m, i) => ({
+    month: m,
+    'Cum Target': s(tT.slice(0, i + 1)),
+    'Cum Actual': i < N ? s(aT.slice(0, i + 1)) : null
+  }));
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "Monthly Revenue \u2014 Actual vs Target"), /*#__PURE__*/React.createElement("div", {
+    className: "card-sub"
+  }, "Apr\u2013Jun shows target only; actuals populate as months close"), /*#__PURE__*/React.createElement(GroupedBars, {
+    data: barData,
+    s1key: "Target",
+    s1color: "#252525",
+    s1label: "Target",
+    s2key: "Actual",
+    s2color: "#e8c547",
+    s2label: "Actual",
+    height: 270
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "legend"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#252525'
+    }
+  }), " Target"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#e8c547'
+    }
+  }), " Actual"))), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "Cumulative H1 Progress"), /*#__PURE__*/React.createElement("div", {
+    className: "card-sub"
+  }, "Running total: actuals (amber) vs target trajectory (grey dashed)"), /*#__PURE__*/React.createElement(DualLines, {
+    data: cumData,
+    l1key: "Cum Target",
+    l1color: "#2e2e2e",
+    l1dash: "6 3",
+    l1label: "Cumulative Target",
+    l2key: "Cum Actual",
+    l2color: "#e8c547",
+    l2label: "Cumulative Actual",
+    height: 220
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "legend"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "22",
+    height: "10"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "5",
+    x2: "22",
+    y2: "5",
+    stroke: "#2e2e2e",
+    strokeWidth: "2",
+    strokeDasharray: "5 3"
+  })), "Cumulative Target"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#e8c547',
+      borderRadius: '50%'
+    }
+  }), " Cumulative Actual"))), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "Revenue by Line"), /*#__PURE__*/React.createElement("div", {
+    className: "card-sub"
+  }, "All figures inc VAT \xA0\xB7\xA0 ", /*#__PURE__*/React.createElement("span", {
+    className: "fc"
+  }, "F"), " = forecast"), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Revenue Line"), MONTHS.map((m, i) => /*#__PURE__*/React.createElement("th", {
+    key: m,
+    className: "r"
+  }, m, i >= N && /*#__PURE__*/React.createElement("span", {
+    className: "fc"
+  }, "F"))), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "H1 Total"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", {
+    className: "sec-hdr"
+  }, /*#__PURE__*/React.createElement("td", {
+    colSpan: "8"
+  }, "Target")), LINES.map(({
+    label,
+    key,
+    color
+  }) => /*#__PURE__*/React.createElement("tr", {
+    key: `t${key}`
+  }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-block',
+      width: 8,
+      height: 8,
+      background: color,
+      borderRadius: 2,
+      marginRight: 9
+    }
+  }), label), MONTHS.map((_, i) => /*#__PURE__*/React.createElement("td", {
+    key: i,
+    className: "r"
+  }, fmt(T[key][i]))), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(s(T[key]))))), /*#__PURE__*/React.createElement("tr", {
+    className: "tot"
+  }, /*#__PURE__*/React.createElement("td", null, "Total Target"), tT.map((v, i) => /*#__PURE__*/React.createElement("td", {
+    key: i,
+    className: "r"
+  }, fmt(v))), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(H1))), /*#__PURE__*/React.createElement("tr", {
+    className: "sec-hdr"
+  }, /*#__PURE__*/React.createElement("td", {
+    colSpan: "8"
+  }, "Actual")), LINES.map(({
+    label,
+    key,
+    color
+  }) => /*#__PURE__*/React.createElement("tr", {
+    key: `a${key}`
+  }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-block',
+      width: 8,
+      height: 8,
+      background: color,
+      borderRadius: 2,
+      marginRight: 9
+    }
+  }), label), MONTHS.map((_, i) => /*#__PURE__*/React.createElement("td", {
+    key: i,
+    className: `r ${i >= N ? 'dim' : ''}`
+  }, i < N ? fmt(A[key][i]) : '—')), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(s(A[key].filter(v => v != null)))))), /*#__PURE__*/React.createElement("tr", {
+    className: "tot"
+  }, /*#__PURE__*/React.createElement("td", null, "Total Actual"), aT.map((v, i) => /*#__PURE__*/React.createElement("td", {
+    key: i,
+    className: `r ${i >= N ? 'dim' : ''}`
+  }, i < N ? fmt(v) : '—')), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(YTD_A))), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      borderTop: '1px solid #222'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    className: "lbl",
+    style: {
+      fontWeight: 600
+    }
+  }, "Variance vs Target"), MONTHS.map((_, i) => /*#__PURE__*/React.createElement("td", {
+    key: i,
+    className: "r"
+  }, i < N ? /*#__PURE__*/React.createElement(VBadge, {
+    actual: aT[i],
+    target: tT[i]
+  }) : /*#__PURE__*/React.createElement("span", {
+    className: "dim"
+  }, "\u2014"))), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, /*#__PURE__*/React.createElement(VBadge, {
+    actual: YTD_A,
+    target: YTD_T
+  })))))));
+}
+
+// ── TAB: PROFITABILITY ────────────────────────────────────────────────────────
+
+function ProfitabilityTab() {
+  const actPNL = PNL.filter(d => d.actual);
+  const fcPNL = PNL.filter(d => !d.actual);
+  const totRev = d => s(d.map(r => r.rev)),
+    totCost = d => s(d.map(r => r.costs)),
+    totProfit = d => s(d.map(r => r.profit));
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "Monthly P&L \u2014 Revenue vs Coach Costs"), /*#__PURE__*/React.createElement("div", {
+    className: "card-sub"
+  }, "Revenue ex-VAT \xB7 Apr\u2013Jun = forecast \xB7 Profit shown as line overlay"), /*#__PURE__*/React.createElement(PnLChart, {
+    data: PNL,
+    height: 310
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "legend"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#4a9eed'
+    }
+  }), " Revenue \u2014 Actual"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#1c3a52'
+    }
+  }), " Revenue \u2014 Forecast"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#f87171'
+    }
+  }), " Costs \u2014 Actual"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#3d1a1a'
+    }
+  }), " Costs \u2014 Forecast"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#4ade80',
+      borderRadius: '50%'
+    }
+  }), " Net Profit"))), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "P&L Summary"), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Line"), PNL.map(d => /*#__PURE__*/React.createElement("th", {
+    key: d.month,
+    className: "r"
+  }, d.month, !d.actual && /*#__PURE__*/React.createElement("span", {
+    className: "fc"
+  }, "F"))), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Q1 Act."), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Q2 Fc."))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    className: "lbl"
+  }, "Revenue (ex VAT)"), PNL.map(d => /*#__PURE__*/React.createElement("td", {
+    key: d.month,
+    className: "r",
+    style: {
+      color: d.actual ? '#60a5fa' : '#1e4060'
+    }
+  }, fmt(d.rev))), /*#__PURE__*/React.createElement("td", {
+    className: "r",
+    style: {
+      color: '#60a5fa',
+      fontWeight: 600
+    }
+  }, fmt(totRev(actPNL))), /*#__PURE__*/React.createElement("td", {
+    className: "r",
+    style: {
+      color: '#1e4060',
+      fontWeight: 600
+    }
+  }, fmt(totRev(fcPNL)))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    className: "lbl"
+  }, "Coach Costs"), PNL.map(d => /*#__PURE__*/React.createElement("td", {
+    key: d.month,
+    className: "r",
+    style: {
+      color: d.actual ? '#f87171' : '#3d1a1a'
+    }
+  }, "(", fmt(d.costs), ")")), /*#__PURE__*/React.createElement("td", {
+    className: "r",
+    style: {
+      color: '#f87171',
+      fontWeight: 600
+    }
+  }, "(", fmt(totCost(actPNL)), ")"), /*#__PURE__*/React.createElement("td", {
+    className: "r",
+    style: {
+      color: '#3d1a1a',
+      fontWeight: 600
+    }
+  }, "(", fmt(totCost(fcPNL)), ")")), /*#__PURE__*/React.createElement("tr", {
+    className: "tot"
+  }, /*#__PURE__*/React.createElement("td", null, "Net Profit"), PNL.map(d => /*#__PURE__*/React.createElement("td", {
+    key: d.month,
+    className: "r",
+    style: {
+      color: d.profit >= 0 ? '#4ade80' : '#f87171'
+    }
+  }, fmt(d.profit))), /*#__PURE__*/React.createElement("td", {
+    className: "r",
+    style: {
+      color: '#4ade80'
+    }
+  }, fmt(totProfit(actPNL))), /*#__PURE__*/React.createElement("td", {
+    className: "r",
+    style: {
+      color: '#2d7a4a'
+    }
+  }, fmt(totProfit(fcPNL)))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    className: "lbl"
+  }, "Margin %"), PNL.map(d => /*#__PURE__*/React.createElement("td", {
+    key: d.month,
+    className: `r ${d.actual ? '' : 'dim'}`
+  }, d.margin.toFixed(1), "%")), /*#__PURE__*/React.createElement("td", {
+    className: "r",
+    style: {
+      color: '#555'
+    }
+  }, (totProfit(actPNL) / totRev(actPNL) * 100).toFixed(1), "%"), /*#__PURE__*/React.createElement("td", {
+    className: "r dim"
+  }, (totProfit(fcPNL) / totRev(fcPNL) * 100).toFixed(1), "%")))), /*#__PURE__*/React.createElement("div", {
+    className: "fn"
+  }, "F = Forecast. Apr\u2013Jun costs = \xA35,000/month Head of Fitness + new model PT team at 45% trainer split + 15% employer tax/NI. Revenue ex-VAT for Jan\u2013Mar from tracker workings; Apr\u2013Jun = (gross target \u2212 PT Rent) \xF7 1.2 + PT Rent.")));
+}
+
+// ── TAB: INDIVIDUAL PTs ───────────────────────────────────────────────────────
+
+function IndividualTab() {
+  const named = PT_DATA.filter(d => d.pt !== 'Intro / Unattrib.');
+  const cTotJ = s(COACHES.map(c => c.jan)),
+    cTotF = s(COACHES.map(c => c.feb)),
+    cTotM = s(COACHES.map(c => c.mar));
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "New Model PT Revenue \u2014 Jan to Mar (Inc VAT)"), /*#__PURE__*/React.createElement("div", {
+    className: "card-sub"
+  }, "From WodBoard income statements (membership + pass purchases)"), /*#__PURE__*/React.createElement(TriBars, {
+    data: named,
+    nameKey: "pt",
+    height: 255
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "legend"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#4a9eed'
+    }
+  }), " Jan"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#e8c547'
+    }
+  }), " Feb"), /*#__PURE__*/React.createElement("div", {
+    className: "leg-item"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "leg-dot",
+    style: {
+      background: '#a78bfa'
+    }
+  }), " Mar"))), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "Revenue by PT"), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "PT"), /*#__PURE__*/React.createElement("th", null, "Model"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Jan"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Feb"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Mar"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Q1 Total"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Mar vs Feb"))), /*#__PURE__*/React.createElement("tbody", null, named.map(d => {
+    const q1 = d.jan + d.feb + d.mar,
+      tr = d.mar - d.feb;
+    return /*#__PURE__*/React.createElement("tr", {
+      key: d.pt
+    }, /*#__PURE__*/React.createElement("td", {
+      style: {
+        fontWeight: 600,
+        color: '#d0d0d0'
+      }
+    }, d.pt), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      className: "badge ba"
+    }, "New")), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, fmt(d.jan)), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, fmt(d.feb)), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, fmt(d.mar)), /*#__PURE__*/React.createElement("td", {
+      className: "r",
+      style: {
+        fontWeight: 600,
+        color: '#fff'
+      }
+    }, fmt(q1)), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, d.feb === 0 && d.mar === 0 ? /*#__PURE__*/React.createElement("span", {
+      className: "dim"
+    }, "\u2014") : /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: tr > 0 ? '#4ade80' : tr < 0 ? '#f87171' : '#555'
+      }
+    }, tr > 0 ? '▲' : tr < 0 ? '▼' : '—', " ", fmt(Math.abs(tr)))));
+  }), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    className: "lbl"
+  }, "Intro / Unattrib."), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+    className: "badge bb"
+  }, "Mixed")), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(300)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(300)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(300)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(900)), /*#__PURE__*/React.createElement("td", {
+    className: "r dim"
+  }, "\u2014")), /*#__PURE__*/React.createElement("tr", {
+    className: "tot"
+  }, /*#__PURE__*/React.createElement("td", {
+    colSpan: "2"
+  }, "Total New Model (inc VAT)"), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(s(PT_DATA.map(d => d.jan)))), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(s(PT_DATA.map(d => d.feb)))), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(s(PT_DATA.map(d => d.mar)))), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmt(s(PT_DATA.map(d => d.jan + d.feb + d.mar)))), /*#__PURE__*/React.createElement("td", null)))), /*#__PURE__*/React.createElement("div", {
+    className: "fn"
+  }, "Totals may not match Revenue Tracker exactly due to WodBoard export timing. Apr\u2013Jun populates as months close.")), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-ttl"
+  }, "Coach Costs \u2014 Jan to Mar (Actual)"), /*#__PURE__*/React.createElement("div", {
+    className: "card-sub"
+  }, "Old model payroll. From Apr, all coaches move to new model (45% split + 15% employer NI)"), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Coach"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Jan"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Feb"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Mar"), /*#__PURE__*/React.createElement("th", {
+    className: "r"
+  }, "Q1 Total"))), /*#__PURE__*/React.createElement("tbody", null, COACHES.map(c => /*#__PURE__*/React.createElement("tr", {
+    key: c.name
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      color: '#c0c0c0'
+    }
+  }, c.name), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(c.jan)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(c.feb)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(c.mar)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(c.jan + c.feb + c.mar)))), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      borderTop: '1px solid #1a1a1a'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    className: "lbl"
+  }, "Tax / NI (15%)"), /*#__PURE__*/React.createElement("td", {
+    className: "r dim"
+  }, fmtD(TAX.jan)), /*#__PURE__*/React.createElement("td", {
+    className: "r dim"
+  }, fmtD(TAX.feb)), /*#__PURE__*/React.createElement("td", {
+    className: "r dim"
+  }, fmtD(TAX.mar)), /*#__PURE__*/React.createElement("td", {
+    className: "r dim"
+  }, fmtD(TAX.jan + TAX.feb + TAX.mar))), /*#__PURE__*/React.createElement("tr", {
+    className: "tot"
+  }, /*#__PURE__*/React.createElement("td", null, "Total Costs"), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(cTotJ + TAX.jan)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(cTotF + TAX.feb)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(cTotM + TAX.mar)), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, fmtD(cTotJ + cTotF + cTotM + TAX.jan + TAX.feb + TAX.mar))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 20,
+      padding: '14px 16px',
+      background: '#0c0c0c',
+      border: '1px solid #1a1a1a',
+      borderRadius: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: '#383838',
+      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
+      marginBottom: 10
+    }
+  }, "Rent Model PTs \u2014 pay gym for space (not a business cost)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 7
+    }
+  }, OLD_PTS.map(pt => /*#__PURE__*/React.createElement("span", {
+    key: pt,
+    className: "badge bp"
+  }, pt))))));
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+
+function App() {
+  const [tab, setTab] = useState(0);
+  const TABS = ['Revenue Tracker', 'Profitability', 'Individual PTs'];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "app"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "header"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "eyebrow"
+  }, "ONE LDN"), /*#__PURE__*/React.createElement("div", {
+    className: "title"
+  }, "PT Cash Tracker \u2014 H1 2026")), /*#__PURE__*/React.createElement("div", {
+    className: "header-meta"
+  }, "Last updated: April 2026", /*#__PURE__*/React.createElement("br", null), "Actuals through end of March", /*#__PURE__*/React.createElement("br", null), "Apr\u2013Jun shown as forecast")), /*#__PURE__*/React.createElement("div", {
+    className: "alert"
+  }, "\u26A0\xA0 Only ", /*#__PURE__*/React.createElement("strong", null, (YTD_A / H1 * 100).toFixed(1), "%"), " of H1 target achieved across 3 of 6 months. March profit margin fell to ", /*#__PURE__*/React.createElement("strong", null, "15.2%"), " \u2014 lowest of the period. \xA0", /*#__PURE__*/React.createElement("strong", null, fmt(H1 - YTD_A)), " still required to hit the full H1 target of ", fmt(H1), "."), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-strip"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-lbl"
+  }, "H1 Target"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-val white"
+  }, fmt(H1)), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-sub"
+  }, "Jan \u2013 Jun 2026")), /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-lbl"
+  }, "YTD Actual"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-val amber"
+  }, fmt(YTD_A)), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-sub"
+  }, "Jan \u2013 Mar 2026")), /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-lbl"
+  }, "H1 Achievement"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-val red"
+  }, (YTD_A / H1 * 100).toFixed(1), "%"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-sub"
+  }, "3 of 6 months complete")), /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-lbl"
+  }, "YTD Variance"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-val red"
+  }, "(", fmt(Math.abs(YTD_V)), ")"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-sub"
+  }, (YTD_V / YTD_T * 100).toFixed(1), "% vs YTD target")), /*#__PURE__*/React.createElement("div", {
+    className: "kpi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "kpi-lbl"
+  }, "Still to Achieve"), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-val white"
+  }, fmt(H1 - YTD_A)), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-sub"
+  }, "Apr \u2013 Jun remaining"))), /*#__PURE__*/React.createElement("div", {
+    className: "tabs"
+  }, TABS.map((t, i) => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    className: `tab ${tab === i ? 'on' : ''}`,
+    onClick: () => setTab(i)
+  }, t))), tab === 0 && /*#__PURE__*/React.createElement(RevenueTab, null), tab === 1 && /*#__PURE__*/React.createElement(ProfitabilityTab, null), tab === 2 && /*#__PURE__*/React.createElement(IndividualTab, null));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+</body>
+</html>
